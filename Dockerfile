@@ -1,39 +1,24 @@
-FROM debian:12-slim AS base
+FROM debian:12-slim
+
+# Install essential tools and socat
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
-	ocl-icd-libopencl1 tzdata socat \  # Install socat
-	&& rm -rf /var/lib/apt/lists/*
+    ocl-icd-libopencl1 tzdata socat \ 
+    && rm -rf /var/lib/apt/lists/*
 
+# Set up the Chia Recompute working directory and copy files
 WORKDIR /chia-recompute
-
 COPY docker-start.sh chia_recompute* .
+
+# Environment variables and exposed ports
 ENV CHIA_RECOMPUTE_PORT="11989"
 EXPOSE 11989
 
-CMD ["./docker-start.sh"]
-
-FROM base AS nvidia
+# Nvidia OpenCL setup
 RUN mkdir -p /etc/OpenCL/vendors && \
     echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 
-
-FROM base AS intel
-RUN apt-get update && apt-get install -y intel-opencl-icd \
-	&& rm -rf /var/lib/apt/lists/*
-
-
-FROM base AS amd
-ARG AMD_DRIVER=amdgpu-pro-20.40-1147286-ubuntu-20.04.tar.xz
-ARG AMD_DRIVER_URL=https://drivers.amd.com/drivers/linux
-RUN apt-get update && apt-get install -y \
-	curl xz-utils \
-    && mkdir -p /tmp/opencl-driver-amd \
-    && cd /tmp/opencl-driver-amd \
-    && curl --referer ${AMD_DRIVER_URL} -O ${AMD_DRIVER_URL}/${AMD_DRIVER} \
-    && tar -Jxvf ${AMD_DRIVER} \
-    && cd amdgpu-pro-20.40-1147286-ubuntu-20.04 \
-    && ./amdgpu-install --opencl=legacy,pal --headless --no-dkms -y \
-    && rm -rf /tmp/opencl-driver-amd \
-    && rm -rf /var/lib/apt/lists/*
+# Start socat to forward IPv6 to IPv4 and run the main script
+CMD ["./docker-start.sh"]
