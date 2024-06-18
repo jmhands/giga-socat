@@ -5,7 +5,7 @@ if [[ -n "${TZ}" ]]; then
 fi
 
 # Start socat in the background 
-socat TCP6-LISTEN:${CHIA_RECOMPUTE_PORT},fork TCP4:localhost:${CHIA_RECOMPUTE_PORT} &
+socat TCP6-LISTEN:8888,fork TCP4:localhost:${CHIA_RECOMPUTE_PORT} &
 
 if [[ ${CHIA_RECOMPUTE_PROXY} == "true" ]]; then
  if [[ -n ${CHIA_RECOMPUTE_NODES} ]]; then
